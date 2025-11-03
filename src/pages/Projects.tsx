@@ -13,6 +13,7 @@ interface Project {
   name: string;
   description: string | null;
   created_at: string;
+  status: "todo" | "in_progress" | "completed";
   taskCount: number;
   memberCount: number;
 }
@@ -55,6 +56,7 @@ const Projects = () => {
 
             return {
               ...project,
+              status: project.status as "todo" | "in_progress" | "completed",
               taskCount: tasks?.length || 0,
               memberCount: members?.length || 0,
             };
@@ -88,6 +90,32 @@ const Projects = () => {
     };
   }, [user]);
 
+  const todoProjects = projects.filter(p => p.status === 'todo');
+  const inProgressProjects = projects.filter(p => p.status === 'in_progress');
+  const completedProjects = projects.filter(p => p.status === 'completed');
+
+  const KanbanColumn = ({ title, projects, accent }: { title: string; projects: Project[]; accent: string }) => (
+    <div className="flex-1 min-w-[300px]">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold mb-1 flex items-center gap-2">
+          <div className={`w-3 h-3 rounded-full ${accent}`} />
+          {title}
+          <span className="text-sm text-muted-foreground ml-auto">{projects.length}</span>
+        </h3>
+      </div>
+      <div className="space-y-4">
+        {projects.map((project) => (
+          <ProjectCard key={project.id} {...project} createdAt={project.created_at} status={project.status} />
+        ))}
+        {projects.length === 0 && (
+          <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+            <p className="text-sm text-muted-foreground">No projects in this column</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -104,9 +132,11 @@ const Projects = () => {
         </div>
 
         {loading ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="space-y-4">
+          <div className="flex gap-6 overflow-x-auto pb-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex-1 min-w-[300px] space-y-4">
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-48 w-full" />
                 <Skeleton className="h-48 w-full" />
               </div>
             ))}
@@ -120,10 +150,10 @@ const Projects = () => {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
-              <ProjectCard key={project.id} {...project} createdAt={project.created_at} />
-            ))}
+          <div className="flex gap-6 overflow-x-auto pb-4">
+            <KanbanColumn title="To Do" projects={todoProjects} accent="bg-blue-500" />
+            <KanbanColumn title="In Progress" projects={inProgressProjects} accent="bg-yellow-500" />
+            <KanbanColumn title="Completed" projects={completedProjects} accent="bg-green-500" />
           </div>
         )}
 

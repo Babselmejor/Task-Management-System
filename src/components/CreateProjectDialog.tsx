@@ -15,6 +15,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CreateProjectDialogProps {
   open: boolean;
@@ -26,6 +33,7 @@ export const CreateProjectDialog = ({ open, onOpenChange }: CreateProjectDialogP
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<"todo" | "in_progress" | "completed">("todo");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,6 +45,7 @@ export const CreateProjectDialog = ({ open, onOpenChange }: CreateProjectDialogP
       name: name.trim(),
       description: description.trim() || null,
       created_by: user.id,
+      status: status,
     });
 
     setLoading(false);
@@ -54,6 +63,7 @@ export const CreateProjectDialog = ({ open, onOpenChange }: CreateProjectDialogP
       });
       setName("");
       setDescription("");
+      setStatus("todo");
       onOpenChange(false);
     }
   };
@@ -89,6 +99,19 @@ export const CreateProjectDialog = ({ open, onOpenChange }: CreateProjectDialogP
                 disabled={loading}
                 rows={3}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select value={status} onValueChange={(value: any) => setStatus(value)} disabled={loading}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todo">To Do</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

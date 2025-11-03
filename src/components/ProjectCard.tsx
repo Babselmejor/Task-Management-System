@@ -11,6 +11,7 @@ interface ProjectCardProps {
   taskCount: number;
   memberCount: number;
   createdAt: string;
+  status: "todo" | "in_progress" | "completed";
 }
 
 export const ProjectCard = ({
@@ -20,15 +21,31 @@ export const ProjectCard = ({
   taskCount,
   memberCount,
   createdAt,
+  status,
 }: ProjectCardProps) => {
+  const statusColors = {
+    todo: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+    in_progress: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+    completed: "bg-green-500/10 text-green-500 border-green-500/20",
+  };
+
+  const statusLabels = {
+    todo: "To Do",
+    in_progress: "In Progress",
+    completed: "Completed",
+  };
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-lg transition-all border-l-4 border-l-primary/20 hover:border-l-primary">
       <CardHeader>
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
             <FolderKanban className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg">{name}</CardTitle>
           </div>
+          <Badge variant="outline" className={statusColors[status]}>
+            {statusLabels[status]}
+          </Badge>
         </div>
         {description && (
           <CardDescription className="line-clamp-2">{description}</CardDescription>
