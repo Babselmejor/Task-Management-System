@@ -22,6 +22,13 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { z } from "zod";
+
+const taskSchema = z.object({
+  title: z.string().trim().min(1, { message: "Task title is required" }).max(100, { message: "Task title must be less than 100 characters" }),
+  description: z.string().trim().max(1000, { message: "Description must be less than 1000 characters" }).optional(),
+  assignedTo: z.string().uuid().optional()
+});
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -73,15 +80,37 @@ export const CreateTaskDialog = ({ open, onOpenChange, projectId }: CreateTaskDi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !title.trim()) return;
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a task",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const result = taskSchema.safeParse({ 
+      title, 
+      description: description || undefined,
+      assignedTo: assignedTo || undefined
+    });
+    
+    if (!result.success) {
+      toast({
+        title: "Validation Error",
+        description: result.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
 
     setLoading(true);
     const { error } = await supabase.from("tasks").insert({
-      title: title.trim(),
-      description: description.trim() || null,
+      title: result.data.title,
+      description: result.data.description || null,
       project_id: projectId,
       created_by: user.id,
-      assigned_to: assignedTo || null,
+      assigned_to: result.data.assignedTo || null,
       status: "todo",
     });
 

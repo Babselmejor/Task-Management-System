@@ -9,6 +9,11 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, User } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { z } from "zod";
+
+const profileSchema = z.object({
+  fullName: z.string().trim().min(1, { message: "Name is required" }).max(100, { message: "Name must be less than 100 characters" })
+});
 
 const Profile = () => {
   const { user } = useAuth();
@@ -40,10 +45,20 @@ const Profile = () => {
     e.preventDefault();
     if (!user) return;
 
+    const result = profileSchema.safeParse({ fullName });
+    if (!result.success) {
+      toast({
+        title: "Validation Error",
+        description: result.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ full_name: fullName.trim() })
+      .update({ full_name: result.data.fullName })
       .eq("id", user.id);
 
     setLoading(false);

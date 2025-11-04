@@ -22,6 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { z } from "zod";
+
+const projectSchema = z.object({
+  name: z.string().trim().min(1, { message: "Project name is required" }).max(100, { message: "Project name must be less than 100 characters" }),
+  description: z.string().trim().max(1000, { message: "Description must be less than 1000 characters" }).optional(),
+  status: z.enum(["todo", "in_progress", "completed"])
+});
 
 interface CreateProjectDialogProps {
   open: boolean;
@@ -38,14 +45,36 @@ export const CreateProjectDialog = ({ open, onOpenChange }: CreateProjectDialogP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !name.trim()) return;
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a project",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const result = projectSchema.safeParse({ 
+      name, 
+      description: description || undefined, 
+      status 
+    });
+    
+    if (!result.success) {
+      toast({
+        title: "Validation Error",
+        description: result.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
 
     setLoading(true);
     const { error } = await supabase.from("projects").insert({
-      name: name.trim(),
-      description: description.trim() || null,
+      name: result.data.name,
+      description: result.data.description || null,
       created_by: user.id,
-      status: status,
+      status: result.data.status,
     });
 
     setLoading(false);
